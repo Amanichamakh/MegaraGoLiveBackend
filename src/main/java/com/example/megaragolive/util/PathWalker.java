@@ -1,13 +1,21 @@
 package com.example.megaragolive.util;
 
 import com.example.megaragolive.entity.Folder;
+
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.regex.Pattern;
 
 public class PathWalker {
     private Folder.Status pathStatus;
+    private String path;
+
     public PathWalker(Folder.Status status) {
         this.pathStatus=status;
+    }
+    public PathWalker(String path) {
+        this.path=path;
     }
 
     public static class Node {
@@ -40,12 +48,12 @@ public class PathWalker {
         for (String name : names)
             node = node.getChild(name);
     }
-    public Folder showTree(){
+    public Folder showTree() throws IOException {
         Folder folder=new Folder("",new ArrayList<Folder>(),true,this.pathStatus);
         printTree(folder,root);
         return folder;
     }
-    private  void printTree(Folder folder, Node node) {
+    private  void printTree(Folder folder, Node node) throws IOException {
         Map<String, Node> children = node.getChildren();
         if ( children==null || children.isEmpty() )
             return;
@@ -58,4 +66,22 @@ public class PathWalker {
         folder.setChildren((ArrayList<Folder>) childs);
     }
 
+   public static Folder getFolderTree(String path) throws IOException {
+        File file=new File(path);
+        ArrayList<Folder> folderArrayList=new ArrayList<Folder>();
+        Folder folder=new Folder(path,folderArrayList,(file.listFiles()!=null && file.listFiles().length>0), file);
+        if(file.isDirectory()){
+            for(File f:file.listFiles()){
+                if(!f.isDirectory()) {
+                    Folder f2 = new Folder(f.getAbsolutePath() ,null, false, f);
+                    folderArrayList.add(f2);
+                }
+                else{
+                    folderArrayList.add(getFolderTree(f.getAbsolutePath()));
+                }
+            }
+            folder.setChildren(folderArrayList);
+        }
+       return folder;
+    }
     }

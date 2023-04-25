@@ -4,13 +4,12 @@ import jakarta.persistence.Entity;
 
 import java.io.File;
 
-@Entity
+
 public class CompareContext
 {
     private File file1;
     private File file2;
     private String report;
-    @jakarta.persistence.Id
     private Long identifier;
 
 

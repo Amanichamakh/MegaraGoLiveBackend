@@ -1,6 +1,8 @@
 package com.example.megaragolive.service;
 
 import com.example.megaragolive.EntityManager;
+import com.example.megaragolive.entity.FilesToken;
+import com.example.megaragolive.repository.FileTokenJPA;
 import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.benf.cfr.reader.api.CfrDriver;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,22 +14,42 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-
+import  static com.example.megaragolive.util.MegaGoLiveConstants.*;
 @Service
 public class EarFileService implements IEarFileService{
-    @Autowired
-    EntityManager em;
     private MultipartFile file;
+
     private String destDir;
     @Autowired
     private ResourceLoader resourceLoader;
+    @Autowired
+    FileTokenJPA ft;
+    @Autowired
+    EntityManager em;
 
+    @Override
+    public String getZip1Path(Long sessionID){
+        return em.getExtractionPath()+File.separator+sessionID+File.separator+ZIP1;
+    }
+    @Override
+    public String getZip2Path(Long sessionID){
+        return em.getExtractionPath()+File.separator+sessionID+File.separator+ZIP2;
+    }
+    @Override
+    public String getResultPath(Long sessionID){
+        return em.getExtractionPath()+File.separator+sessionID+File.separator+RESULT;
+    }
+    @Override
+    public String getUNZip2Path(Long sessionID){
+        return em.getExtractionPath()+File.separator+sessionID+File.separator+UNZIP2;
+    }
+    @Override
+    public String getUNZip1Path(Long sessionID){
+        return em.getExtractionPath()+File.separator+sessionID+File.separator+UNZIP1;
+    }
     @Override
     public void initWorkingFolders(String sessionID) {
       String path=em.getExtractionPath()+File.separator+sessionID;
@@ -42,7 +64,10 @@ public class EarFileService implements IEarFileService{
         String path=em.getExtractionPath()+File.separator+sessionID;
         FileUtils.deleteDirectory(new File(path));
     }
-
+    @Override
+    public void synchronizeFilesToken(FilesToken fIt){
+     ft.saveAndFlush(fIt);
+    }
     @Override
     public File convertMultipartFileToFile(MultipartFile multipartFile) {
         return null;
@@ -101,12 +126,6 @@ public class EarFileService implements IEarFileService{
             fos.write(buffer, 0, bytesRead);
         }
         fos.close();
-        if(filePath.contains(".jar")){
-            decompileOneJar(file,filePath.substring(0,filePath.lastIndexOf(File.separator)),filePath.substring(0,filePath.lastIndexOf(File.separator)));
-        }
-        else         if(filePath.contains(".class")) {
-            decompileOneClass(file,filePath);
-        }
             return fos;
     }
 
@@ -130,7 +149,23 @@ public class EarFileService implements IEarFileService{
         return zipIn;
 
     }
-
+    @Override
+    public Set<String> getAllFileNamesFromJarsEars(File file){
+          return (file.isDirectory())?new HashSet(List.of(file.listFiles())):new HashSet<>();
+    }
+    @Override
+    public Long uploadAndExtract2Files(MultipartFile file1,MultipartFile file2) throws IOException {
+        FilesToken ft=new FilesToken();
+        synchronizeFilesToken(ft);
+        String path=em.getExtractionPath();
+        String file1P=path+File.separator+ ft.getToken();
+        String file2P=path+File.separator+ ft.getToken();
+        extractEarFile(file1,file1P+File.separator+ ZIP1);
+        decompileManyJars(file1P+File.separator+ZIP1,file1P+File.separator+UNZIP1);
+        extractEarFile(file2,file2P+File.separator+ZIP2);
+        decompileManyJars(file2P+File.separator+ZIP2,file2P+File.separator+UNZIP2);
+        return ft.getToken();
+    }
     @Override
     public void decompileOneJar(File jarFile, String targetFolder, String targetParent) throws IOException {
         if(getExtension(jarFile).equals(".jar")){
@@ -176,7 +211,7 @@ public class EarFileService implements IEarFileService{
        for(File file:files){
            if(getExtension(file).equals(".jar")){
             decompileOneJar(file,targetFolder+File.separator+file.getName(),targetFolder+File.separator+file.getName());
-            Files.delete(Path.of(file.toURI()));
+           // Files.delete(Path.of(file.toURI()));
            }
        }
     }

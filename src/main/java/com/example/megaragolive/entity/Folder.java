@@ -1,8 +1,13 @@
 package com.example.megaragolive.entity;
 
-import java.io.File;
-import java.util.ArrayList;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.apache.commons.io.IOUtils;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+@JsonSerialize
 public class Folder {
     public static enum Status {
         MODIFIED,
@@ -12,10 +17,12 @@ public class Folder {
 
     private Status status=Status.EQUAL;
     private String name;
-    private ArrayList<Folder> children;
-    private File fileContent;
+    private String label;
 
-    private boolean hasChild;
+    private ArrayList<Folder> children;
+    private String data;
+private String icon=  "pi pi-folder";
+    private boolean hasChildren;
     public Status getStatus() {
         return status;
     }
@@ -24,31 +31,38 @@ public class Folder {
         this.status = status;
     }
 
-    public boolean isHasChild() {
-        return hasChild;
+    public boolean isHasChildren() {
+        return hasChildren;
     }
-    public void setHasChild(boolean hasChild) {
-        this.hasChild = hasChild;
+    public void setHasChildren(boolean hasChildren) {
+        this.hasChildren = hasChildren;
     }
-    public Folder(String name, ArrayList<Folder> children, boolean hasChild,Status status) {
+    public Folder(String name, ArrayList<Folder> children, boolean hasChildren, Status status) throws IOException {
         this.name = name;
         this.children = children;
-        this.hasChild = hasChild;
+        this.hasChildren = hasChildren;
         this.status=status;
+        this.label=name;
+    }
+    public Folder(String name, ArrayList<Folder> children, boolean hasChildren, File data) throws IOException {
+        this.name = name;
+        this.children = children;
+        this.hasChildren = hasChildren;
+        this.label=name;
         initFileContent();
     }
-    private void initFileContent(){
+    private void initFileContent() throws IOException {
         File file=new File(name);
         if(!file.isDirectory()){
-            this.fileContent=file;
+            this.data = IOUtils.toString(new FileInputStream(file));
         }
     }
-    public File getFileContent() {
-        return fileContent;
+    public String getData() {
+        return data;
     }
 
-    public void setFileContent(File fileContent) {
-        this.fileContent = fileContent;
+    public void setData(String data) {
+        this.data = data;
     }
     public String getName() {
         return name;
