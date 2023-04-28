@@ -96,7 +96,7 @@ public class EarFileService implements IEarFileService{
 
     @Override
     public void extractEarFile(MultipartFile earFile, String destination) throws IOException {
-        InputStream inputStream1 = earFile.getInputStream();
+        InputStream inputStream1 = earFile.getInputStream();// lit les bytes du fichier ear
         // Créez un fichier temporaire pour stocker le contenu du fichier
         unzipFile(inputStream1,destination);
     }
@@ -133,7 +133,7 @@ public class EarFileService implements IEarFileService{
     public ZipInputStream unzipFile(InputStream is, String destDir) throws IOException {
         File file=new File(destDir);
         if(!file.exists()) file.mkdir();
-        ZipInputStream zipIn = new ZipInputStream(is);
+        ZipInputStream zipIn = new ZipInputStream(is);//reading files in the zipfile
         ZipEntry entry = zipIn.getNextEntry();
         while (entry != null) {
             String filepath = destDir + File.separator + entry.getName();//fil
@@ -189,7 +189,7 @@ public class EarFileService implements IEarFileService{
                  //   Files.delete(Path.of(file.toURI()));
                 }
             }
-        }  else{
+        }  else{//if the folder is not a directory
             if(getExtension(folder).equals(".jar")  || getExtension(folder).equals(".war")){
                 decompileOneJar(folder,targetFolder+File.separator+folder.getName(),targetParent);
                 Files.delete(Path.of(folder.toURI()));
@@ -207,11 +207,13 @@ public class EarFileService implements IEarFileService{
     @Override
     public void decompileManyJars(String sourceFolder, String targetFolder) throws IOException {
         File sourceFile=new File(sourceFolder);
-       File[] files = sourceFile.listFiles();
-       for(File file:files){
-           if(getExtension(file).equals(".jar")){
-            decompileOneJar(file,targetFolder+File.separator+file.getName(),targetFolder+File.separator+file.getName());
-           // Files.delete(Path.of(file.toURI()));
+       File[] files = sourceFile.listFiles();//list of files inside the sourcefolder
+       if(files !=null && files.length>0) {
+           for (File file : files) {
+               if (getExtension(file).equals(".jar")) {
+                   decompileOneJar(file, targetFolder + File.separator + file.getName(), targetFolder + File.separator + file.getName());
+                   // Files.delete(Path.of(file.toURI()));
+               }
            }
        }
     }
@@ -221,7 +223,6 @@ public class EarFileService implements IEarFileService{
         if (!fileToDecompile.exists()) {
             throw new IllegalArgumentException("Le fichier spécifié n'existe pas : " + fileToDecompile.getAbsolutePath());
         }
-        //    FileOutputStream fos=new FileOutputStream(targetFile);
         Map<String, String> options = new HashMap<>();
         options.put("outputdir", targetFolder);
         CfrDriver driver = new CfrDriver.Builder()

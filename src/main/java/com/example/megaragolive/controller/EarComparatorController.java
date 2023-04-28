@@ -31,7 +31,8 @@ public class EarComparatorController {
         ecs.createResultFiles(es.getUNZip1Path(token),es.getUNZip2Path(token),es.getUNZip1Path(token),es.getUNZip2Path(token),es.getResultPath(token));
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            return new ResponseEntity<Folder>(PathWalker.getFolderTree(es.getResultPath(token)), headers, HttpStatus.OK);
+            Folder folder=PathWalker.getFolderTree(es.getResultPath(token));
+            return new ResponseEntity<Folder>(folder, headers, HttpStatus.OK);
         } catch (IOException e) {
             return null;
         }
